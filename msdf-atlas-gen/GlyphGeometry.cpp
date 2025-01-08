@@ -13,6 +13,7 @@ bool GlyphGeometry::load(msdfgen::FontHandle *font, double geometryScale, msdfge
         this->index = index.getIndex();
         this->geometryScale = geometryScale;
         codepoint = 0;
+        msdfgen::getCodepoint(codepoint, index, font);
         advance *= geometryScale;
         #ifdef MSDFGEN_USE_SKIA
             if (preprocessGeometry)

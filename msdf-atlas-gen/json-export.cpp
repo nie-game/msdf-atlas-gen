@@ -126,14 +126,8 @@ bool exportJSON(const FontGeometry *fonts, int fontCount, ImageType imageType, c
         bool firstGlyph = true;
         for (const GlyphGeometry &glyph : font.getGlyphs()) {
             fputs(firstGlyph ? "{" : ",{", f);
-            switch (font.getPreferredIdentifierType()) {
-                case GlyphIdentifierType::GLYPH_INDEX:
-                    fprintf(f, "\"index\":%d,", glyph.getIndex());
-                    break;
-                case GlyphIdentifierType::UNICODE_CODEPOINT:
-                    fprintf(f, "\"unicode\":%u,", glyph.getCodepoint());
-                    break;
-            }
+            fprintf(f, "\"index\":%d,", glyph.getIndex());
+            fprintf(f, "\"unicode\":%u,", glyph.getCodepoint());
             fprintf(f, "\"advance\":%.17g", glyph.getAdvance());
             double l, b, r, t;
             glyph.getQuadPlaneBounds(l, b, r, t);
@@ -151,10 +145,10 @@ bool exportJSON(const FontGeometry *fonts, int fontCount, ImageType imageType, c
             if (l || b || r || t) {
                 switch (metrics.yDirection) {
                     case YDirection::BOTTOM_UP:
-                        fprintf(f, ",\"atlasBounds\":{\"left\":%.17g,\"bottom\":%.17g,\"right\":%.17g,\"top\":%.17g}", l, b, r, t);
+                        fprintf(f, ",\"atlasBounds\":{\"left\":%.17g,\"bottom\":%.17g,\"right\":%.17g,\"top\":%.17g}", l/(metrics.width-1), b/(metrics.height-1), r/(metrics.width-1), t/(metrics.height-1));
                         break;
                     case YDirection::TOP_DOWN:
-                        fprintf(f, ",\"atlasBounds\":{\"left\":%.17g,\"top\":%.17g,\"right\":%.17g,\"bottom\":%.17g}", l, metrics.height-t, r, metrics.height-b);
+                        fprintf(f, ",\"atlasBounds\":{\"left\":%.17g,\"top\":%.17g,\"right\":%.17g,\"bottom\":%.17g}", l/(metrics.width-1), (metrics.height-t)/(metrics.height-1), r/(metrics.width-1), (metrics.height-b)/(metrics.height-1));
                         break;
                 }
             }

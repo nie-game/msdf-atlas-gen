@@ -116,6 +116,8 @@ OUTPUT SPECIFICATION - one or more can be specified
       Saves the atlas as an image file with the specified format. Layout data must be stored separately.
   -json <filename.json>
       Writes the atlas's layout data, as well as other metrics into a structured JSON file.
+  -cpp <filename.cpp>
+      Nie Special
   -csv <filename.csv>
       Writes the layout data of the glyphs into a simple CSV file.)"
 #ifndef MSDF_ATLAS_NO_ARTERY_FONT
@@ -324,6 +326,7 @@ struct Configuration {
     const char *arteryFontFilename;
     const char *imageFilename;
     const char *jsonFilename;
+    const char *cppFilename;
     const char *csvFilename;
     const char *shadronPreviewFilename;
     const char *shadronPreviewText;
@@ -552,6 +555,10 @@ int main(int argc, const char *const *argv) {
         }
         ARG_CASE("-json", 1) {
             config.jsonFilename = argv[argPos++];
+            continue;
+        }
+        ARG_CASE("-cpp", 1) {
+            config.cppFilename = argv[argPos++];
             continue;
         }
         ARG_CASE("-csv", 1) {
@@ -935,7 +942,7 @@ int main(int argc, const char *const *argv) {
     }
     if (!fontInput.fontFilename)
         ABORT("No font specified.");
-    if (!(config.arteryFontFilename || config.imageFilename || config.jsonFilename || config.csvFilename || config.shadronPreviewFilename)) {
+    if (!(config.arteryFontFilename || config.imageFilename || config.jsonFilename || config.cppFilename || config.csvFilename || config.shadronPreviewFilename)) {
         fputs("No output specified.\n", stderr);
         return 0;
     }
@@ -976,7 +983,7 @@ int main(int argc, const char *const *argv) {
         rangeUnits = Units::PIXELS;
         rangeValue = DEFAULT_PIXEL_RANGE;
     }
-    if (config.kerning && !(config.arteryFontFilename || config.jsonFilename || config.shadronPreviewFilename))
+    if (config.kerning && !(config.arteryFontFilename || config.jsonFilename || config.cppFilename || config.shadronPreviewFilename))
         config.kerning = false;
     if (config.threadCount <= 0)
         config.threadCount = std::max((int) std::thread::hardware_concurrency(), 1);
@@ -1034,7 +1041,7 @@ int main(int argc, const char *const *argv) {
         result = 1;
         fputs("Error: Unable to create an Artery Font file with the specified image format!\n", stderr);
         // Recheck whether there is anything else to do
-        if (!(config.arteryFontFilename || config.imageFilename || config.jsonFilename || config.csvFilename || config.shadronPreviewFilename))
+        if (!(config.arteryFontFilename || config.imageFilename || config.jsonFilename || config.cppFilename || config.csvFilename || config.shadronPreviewFilename))
             return result;
         layoutOnly = !(config.arteryFontFilename || config.imageFilename);
     }
@@ -1419,6 +1426,31 @@ int main(int argc, const char *const *argv) {
         else {
             result = 1;
             fputs("Failed to write JSON output file.\n", stderr);
+        }
+    }
+
+    if (config.cppFilename) {
+        CppAtlasMetrics cppMetrics = { };
+        CppAtlasMetrics::GridMetrics gridMetrics = { };
+        cppMetrics.distanceRange = config.pxRange;
+        cppMetrics.size = config.emSize;
+        cppMetrics.width = config.width, cppMetrics.height = config.height;
+        cppMetrics.yDirection = config.yDirection;
+        if (packingStyle == PackingStyle::GRID) {
+            gridMetrics.cellWidth = config.grid.cellWidth, gridMetrics.cellHeight = config.grid.cellHeight;
+            gridMetrics.columns = config.grid.cols, gridMetrics.rows = config.grid.rows;
+            if (config.grid.fixedOriginX)
+                gridMetrics.originX = &uniformOriginX;
+            if (config.grid.fixedOriginY)
+                gridMetrics.originY = &uniformOriginY;
+            gridMetrics.spacing = spacing;
+            cppMetrics.grid = &gridMetrics;
+        }
+        if (exportCPP(fonts.data(), fonts.size(), config.imageType, cppMetrics, config.cppFilename, config.kerning))
+            fputs("Glyph layout and metadata written into CPP file.\n", stderr);
+        else {
+            result = 1;
+            fputs("Failed to write CPP output file.\n", stderr);
         }
     }
 

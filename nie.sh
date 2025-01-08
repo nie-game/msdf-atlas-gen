@@ -1,0 +1,1 @@
+./build/bin/msdf-atlas-gen -font /usr/share/fonts/truetype/roboto-fontface/roboto/Roboto-Regular.ttf -allglyphs -and -font /tmp/promptfont.otf -allglyphs -size 64 -pxrange 4 -pxalign on -pxpadding 2 -type msdf -format bin -imageout ~/nie-game/eyebreach/src/atlas.bin -cpp ~/nie-game/eyebreach/src/atlas.cpp
